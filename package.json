@@ -1,0 +1,58 @@
+{
+  "name": "dsh-prompt-library",
+  "version": "1.0.0",
+  "author": "Super (https://github.com/Super-QAQ)",
+  "type": "module",
+  "description": "Save prompts once and reuse them from the composer or the Agent's prompt tools: smart import from a link, dependency checks for skills and plugins, and a built-in panel with search and tags.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Super-QAQ/dsh-prompt-library.git"
+  },
+  "homepage": "https://github.com/Super-QAQ/dsh-prompt-library#readme",
+  "bugs": {
+    "url": "https://github.com/Super-QAQ/dsh-prompt-library/issues"
+  },
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "prompts",
+    "prompt-library",
+    "snippets"
+  ],
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg"
+  },
+  "files": [
+    "index.js",
+    "client.js",
+    "cordis.patch.yml",
+    "locale/*.json",
+    "icon.svg",
+    "README.md"
+  ],
+  "engines": {
+    "dsh": ">=0.2.2-rc.1 <0.3.0-0"
+  },
+  "license": "MIT",
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": [
+        "@deepseek-ai/dsh-client-locale",
+        "@deepseek-ai/dsh-client-ui-conversation"
+      ]
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

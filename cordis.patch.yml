@@ -1,0 +1,5 @@
+# Mounts the prompt library: one Host row carrying the store, the prompt tools,
+# and the authenticated route the browser panel reads and writes.
+- insert:
+    - id: dsh-prompt-library
+      name: 'dsh-prompt-library'
