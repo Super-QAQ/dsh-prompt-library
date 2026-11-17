@@ -1,0 +1,30 @@
+{
+  "format": 1,
+  "title": { "en": "Super's DSH plugins", "zh": "Super 的 DSH 插件" },
+  "description": {
+    "en": "Plugins for DeepSeek Harness by Super.",
+    "zh": "Super 为 DeepSeek Harness 写的插件。"
+  },
+  "plugins": [
+    {
+      "name": "dsh-prompt-library",
+      "title": { "en": "Prompt library", "zh": "提示词库" },
+      "description": {
+        "en": "Save prompts once and reuse them from the composer or the Agent's prompt tools: smart import from a link, dependency checks for skills and plugins, and a searchable panel with tags.",
+        "zh": "把常用提示词保存一次，之后在输入框旁的面板里搜索、按标签筛选、一键插入；支持从链接智能录入、技能与插件依赖检查，Agent 也能通过 prompt_* 工具读写同一份数据。"
+      },
+      "icon": "icons/dsh-prompt-library.svg",
+      "author": "Super",
+      "homepage": "https://github.com/Super-QAQ/dsh-prompt-library#readme",
+      "repository": { "url": "https://github.com/Super-QAQ/dsh-prompt-library" },
+      "versions": [
+        {
+          "version": "1.0.0",
+          "publishTimestamp": 1794820948,
+          "source": { "type": "npm" },
+          "engines": { "dsh": ">=0.2.2-rc.1 <0.3.0-0" }
+        }
+      ]
+    }
+  ]
+}
