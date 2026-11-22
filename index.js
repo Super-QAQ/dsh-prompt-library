@@ -14,6 +14,56 @@ import path from 'node:path'
 export const name = 'dsh-prompt-library'
 export const inject = ['tools']
 
+/**
+ * Build the plugin's Config with the host's schemastery. Its one field, `agentTools`, is volatile
+ * (as in dsh-media-viewer) so the DSH settings forms publish and edit it: only volatile fields
+ * appear in a plugin page's config form. A volatile change does not restart the plugin, so the
+ * value is read once at load — turning it off takes effect the next time DSH starts or the plugin
+ * is reloaded.
+ * @param z - the schemastery export.
+ * @returns the Config schema.
+ */
+export function createConfig(z) {
+  const agentTools = z.boolean().default(true).description('Register prompt_save/list/get/delete/import_url to the Agent. Turn off to save per-request tool-definition context; the composer panel keeps working. A change takes effect after DSH restarts or the plugin reloads.')
+  if (typeof agentTools.volatile === 'function') return z.object({ agentTools: agentTools.volatile() })
+  Object.assign(agentTools.meta, { volatile: true })
+  return z.object({ agentTools })
+}
+
+async function loadConfig() {
+  try {
+    const { default: z } = await import('@deepseek-ai/schemastery')
+    const s = createConfig(z)
+    // Cordis validates through Standard Schema; an older schemastery without it would fail the plugin's load.
+    return s['~standard'] === undefined ? undefined : s
+  } catch {
+    // Only a DSH host resolves the package (plain-Node tests do not): without it there is no setting.
+    return undefined
+  }
+}
+
+/**
+ * The plugin's one setting, `agentTools` (default `true`, volatile): read once at load, while true
+ * the five prompt tools are registered to the Agent; turning it off drops those tools and leaves the
+ * composer panel and the `/api` route untouched. Because it is volatile, the change takes effect the
+ * next time DSH starts or the plugin reloads, not in the running session. `undefined` where
+ * `@deepseek-ai/schemastery` cannot be loaded.
+ */
+export const Config = await loadConfig()
+
+/**
+ * Read `agentTools` out of a Cordis config. A volatile field arrives as a reference with `.get()`;
+ * a plain boolean (older hosts, or a direct `apply` call) is used as-is. Only an explicit `false`
+ * disables the tools, so an absent value keeps the default.
+ * @param config - the config handed to `apply`, possibly undefined.
+ * @returns whether the Agent tools should be registered.
+ */
+function agentToolsEnabled(config) {
+  const value = config == null ? undefined : config.agentTools
+  if (value !== null && typeof value === 'object' && typeof value.get === 'function') return value.get() !== false
+  return value !== false
+}
+
 /** Served through the `/api` carrier, so only the authenticated owner reaches it. */
 const ROUTE = '/api/prompt-library/prompts'
 const MAX_TITLE = 160
@@ -849,12 +899,20 @@ function importTool(ctx) {
   }), 'prompt-library: prompt_import_url')
 }
 
-export function apply(ctx) {
-  saveTool(ctx)
-  listTool(ctx)
-  getTool(ctx)
-  deleteTool(ctx)
-  importTool(ctx)
+/**
+ * Register the plugin. `config.agentTools` defaults to true (volatile, read at load): false skips
+ * registering the five Agent tools, and because the field is volatile the change takes effect after
+ * DSH restarts or the plugin reloads. Only the Agent tools are affected — the composer panel and the
+ * `/api` route keep working.
+ */
+export function apply(ctx, config) {
+  if (agentToolsEnabled(config)) {
+    saveTool(ctx)
+    listTool(ctx)
+    getTool(ctx)
+    deleteTool(ctx)
+    importTool(ctx)
+  }
 
   ctx.inject(['connection'], (connectionCtx) => {
     connectionCtx.connection.fetch.register({

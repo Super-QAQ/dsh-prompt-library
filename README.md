@@ -5,7 +5,7 @@
 - 输入框左侧「提示词」面板：搜索、标签筛选、插入草稿、复制、新建/编辑/删除
 - 从链接智能录入：抓页面后用默认模型提取现成提示词
 - 依赖检查：`skill:` / `plugin:` 没装好时卡片标红，一键让 Agent 安装
-- Agent 工具：`prompt_save`、`prompt_list`、`prompt_get`、`prompt_delete`、`prompt_import_url`
+- Agent 工具：`prompt_save`、`prompt_list`、`prompt_get`、`prompt_delete`、`prompt_import_url`（可用 `agentTools` 配置关掉，见「配置」）
 
 ## 安装
 
@@ -60,6 +60,27 @@ dsh plugin --profile <profile> add dsh-prompt-library
 
 例如让它「把刚才这段提示词存进提示词库」，之后在面板里就能看到。
 
+## 配置
+
+`agentTools`（默认 `true`）：为 `true` 时向 Agent 注册上面五个 `prompt_*` 工具；设为 `false` 时不注册这些工具，每个请求少带五份工具定义、节省上下文，输入框面板与 `/api` 路由照常可用。
+
+两种改法任选：
+
+- 在插件页关掉：**插件管理 → 提示词库（bundle）页 → 配置区 →「向 Agent 注册提示词工具」开关**。保存后需重启 DSH（或重新加载本插件）后生效，当前运行会话仍按重启前的配置运行。
+- 在 `cordis.patch.yml` 里覆盖这条插件行的配置（**不是新增一行**，按 `id` 定向覆盖已有行）：
+
+  ```yaml
+  - id: dsh-prompt-library
+    config:
+      agentTools: false
+  ```
+
+  补丁里已有 `- insert: - id: dsh-prompt-library ...` 挂载行时，上面这段是**同 id 的覆盖补丁**：Cordis 按 `id` 定位到该行、**整体替换该行的 `config`（不是深合并）**，不会重复挂载。
+
+`agentTools` 是 volatile 字段，插件在启动时读取它的值；**保存后需重启 DSH（或重新加载本插件）才真正生效，当前运行会话仍按重启前的配置运行**。
+
+关掉后只会失去这五个 Agent 工具；面板的搜索、插入、复制、新建/编辑/删除和从链接智能录入都照常工作。
+
 ## 数据在哪里
 
 条目保存在本机：
@@ -75,7 +96,7 @@ dsh plugin --profile <profile> add dsh-prompt-library
 
 ## 兼容性
 
-- 需要 Web GUI（面板挂在 `conversation.input.left`、`sidebar.footer.action` 和 `shell.overlay` 三个插槽上）；纯终端环境只保留五个 Agent 工具。
+- 需要 Web GUI（面板挂在 `conversation.input.left`、`sidebar.footer.action` 和 `shell.overlay` 三个插槽上）；纯终端环境默认保留五个 Agent 工具，`agentTools` 关闭时为 0。
 - 样式只使用主题变量（`--dsw-alias-*` 与 `--dsw-focus-ring-*`），跟随明暗主题切换。
 - 面板里点右上角刷新按钮可重新读取文件；Agent 用 `prompt_save` 写入后，已打开的面板需要刷新才显示新条目。
 - 文章编辑未保存时按 Esc 或关闭会直接丢弃改动，长提示词请先「保存」。
