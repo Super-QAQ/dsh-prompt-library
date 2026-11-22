@@ -38,6 +38,17 @@
   "engines": {
     "dsh": ">=0.2.2-rc.1 <0.3.0-0"
   },
+  "peerDependencies": {
+    "@deepseek-ai/schemastery": ">=3.18.1"
+  },
+  "peerDependenciesMeta": {
+    "@deepseek-ai/schemastery": {
+      "optional": true
+    }
+  },
+  "scripts": {
+    "test": "node test/agent-tools-toggle.test.mjs && node test/settings-slot.test.mjs"
+  },
   "license": "MIT",
   "dsh": {
     "bundle": {

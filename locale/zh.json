@@ -1,6 +1,6 @@
 {
   "meta": {
     "title": "提示词库",
-    "description": "输入框左侧的「提示词」按钮打开提示词库：搜索、按标签筛选，点「插入」写进草稿或「复制」。新建表单默认只有「从链接智能录入」（抓取网页后用默认模型提取现成提示词，或总结一条可复用的），「手动设置」折叠着标题、标签、来源、正文。条目可以记录依赖（`skill:名称` / `plugin:包名`），卡片按当前会话判断是否装好；没装的显示红色「未安装」，点一下就让 Agent 在当前会话里安装。同样的事也能用 Agent 工具完成：prompt_save、prompt_list、prompt_get、prompt_delete、prompt_import_url。数据保存在本机 ~/.dsh/prompt-library/prompts.json，停用插件不会删除；智能录入会发起一次网页请求和一次模型调用，页面正文会发给模型供应商。"
+    "description": "输入框左侧的「提示词」按钮打开提示词库：搜索、按标签筛选，点「插入」写进草稿或「复制」。新建表单默认只有「从链接智能录入」（抓取网页后用默认模型提取现成提示词，或总结一条可复用的），「手动设置」折叠着标题、标签、来源、正文。条目可以记录依赖（`skill:名称` / `plugin:包名`），卡片按当前会话判断是否装好；没装的显示红色「未安装」，点一下就让 Agent 在当前会话里安装。同样的事也能用 Agent 工具完成：prompt_save、prompt_list、prompt_get、prompt_delete、prompt_import_url。数据保存在本机 ~/.dsh/prompt-library/prompts.json，停用插件不会删除；智能录入会发起一次网页请求和一次模型调用，页面正文会发给模型供应商。可用 agentTools 配置关闭这些 Agent 工具、只保留面板（在插件页配置区或 cordis.patch.yml 覆盖，重启 DSH 后生效）。"
   }
 }

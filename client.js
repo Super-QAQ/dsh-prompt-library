@@ -15,6 +15,12 @@ window.__ModuleLoader__.load({
     const NS = 'prompt-library'
     const ROUTE = 'api/prompt-library/prompts'
 
+    // The host's shared controls (Switch, ...) from the shell's module table, same as media-viewer. A host without
+    // them keeps the panel and simply skips the plugin page's settings card. (The state object below is `ui`, so
+    // the primitives take the name `primitives`.)
+    let primitives = null
+    try { primitives = require('@deepseek-ai/dsh-client-ui-primitives') } catch { primitives = null }
+
     const DICT_ZH = {
       'trigger.label': '提示词',
       'trigger.hint': '打开提示词库：插入、复制或管理已保存的提示词',
@@ -81,6 +87,12 @@ window.__ModuleLoader__.load({
       'notice.saved': '已保存',
       'notice.deleted': '已删除',
       'notice.copied': '已复制',
+      'config.title': 'Agent 工具',
+      'config.agentTools': '向 Agent 注册提示词工具',
+      'config.agentToolsHint': '开启时注册 prompt_save、prompt_list、prompt_get、prompt_delete、prompt_import_url 五个工具；关掉后不再注册，每个请求省下这几份工具定义占用的上下文，输入框面板照常可用。',
+      'config.readOnly': '当前配置在此处只读，无法修改。',
+      'config.saveFailed': '保存失败，请重试。',
+      'config.restartHint': '保存后需重启 DSH（或重新加载本插件）才会真正停止注册这些工具；当前会话仍按重启前的设置运行。',
     }
 
     const DICT_EN = {
@@ -149,6 +161,12 @@ window.__ModuleLoader__.load({
       'notice.saved': 'Saved',
       'notice.deleted': 'Deleted',
       'notice.copied': 'Copied',
+      'config.title': 'Agent tools',
+      'config.agentTools': 'Register the prompt tools to the Agent',
+      'config.agentToolsHint': 'When on, the five tools prompt_save, prompt_list, prompt_get, prompt_delete, and prompt_import_url are registered to the Agent. When off they are not registered, saving their tool-definition context on every request; the composer panel keeps working.',
+      'config.readOnly': 'This setting is read-only here and cannot be changed.',
+      'config.saveFailed': 'Saving failed. Please try again.',
+      'config.restartHint': 'Saving only takes effect after DSH restarts (or this plugin reloads): the current session keeps running with the setting from before the restart.',
     }
 
     /** Bound in `apply`; components prefer the slot-provided `t` and fall back to this. */
@@ -996,6 +1014,45 @@ window.__ModuleLoader__.load({
           }, busy ? t('action.saving') : t('action.save'))))
     }
 
+    /** The settings snapshot holds agentTools; anything but an explicit `false` is the default (on). */
+    function agentToolsOn(form) {
+      return (form && form.value && form.value.agentTools) !== false
+    }
+
+    /**
+     * The `plugins.bundle.config` card for this package: one switch for `agentTools`, on the bundle's page in the
+     * plugin manager. Owner props: `view`; inject: `useSettingsForm` (the entry's settings form), `setAgentTools`.
+     */
+    function AgentToolsSettings(props) {
+      const t = trOf(props)
+      const form = props.useSettingsForm(value => value)
+      const [saving, setSaving] = React.useState(false)
+      const [failed, setFailed] = React.useState(false)
+      if (props.view !== 'page' || form.status === 'unavailable') return null
+      const ready = form.status === 'ready'
+      return h('div', { className: 'plib-settings' },
+        h('h4', { className: 'plib-settings-title' }, t('config.title')),
+        h('div', { className: 'plib-settings-row' },
+          h('div', { className: 'plib-settings-text' },
+            h('div', { className: 'plib-settings-label' }, t('config.agentTools')),
+            h('p', { className: 'plib-settings-hint' }, t('config.agentToolsHint'))),
+          h(primitives.Switch, {
+            checked: agentToolsOn(form),
+            label: t('config.agentTools'),
+            disabled: !ready || !form.writable || saving,
+            onChange(next) {
+              setSaving(true)
+              setFailed(false)
+              Promise.resolve(props.setAgentTools(next)).then(
+                accepted => { setSaving(false); setFailed(accepted === false) },
+                () => { setSaving(false); setFailed(true) })
+            },
+          })),
+        h('p', { className: 'plib-settings-hint plib-settings-restart' }, t('config.restartHint')),
+        ready && !form.writable ? h('p', { className: 'plib-settings-hint' }, t('config.readOnly')) : null,
+        failed ? h('p', { className: 'plib-settings-error', role: 'alert' }, t('config.saveFailed')) : null)
+    }
+
     const CSS = `
 .plib-chip{display:inline-flex;align-items:center;gap:5px;height:28px;padding:0 8px;border:1px solid transparent;border-radius:var(--dsw-radius-sm,6px);background:transparent;color:var(--dsw-alias-label-secondary);font-family:inherit;font-size:12px;line-height:1;cursor:pointer;white-space:nowrap}
 .plib-chip:hover{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}
@@ -1088,6 +1145,13 @@ window.__ModuleLoader__.load({
 .plib-row{display:flex;justify-content:flex-end;gap:6px;flex:none}
 .plib-toast{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);max-width:calc(100% - 40px);padding:7px 13px;border-radius:8px;background:var(--dsw-alias-label-primary);color:var(--dsw-alias-bg-base);font-size:12px;line-height:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:0 8px 24px rgba(0,0,0,.18);pointer-events:none}
 .plib-sr{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.plib-settings{display:flex;flex-direction:column;gap:8px}
+.plib-settings-title{margin:0;font-size:14px;line-height:22px;font-weight:500;color:var(--dsw-alias-label-primary)}
+.plib-settings-row{display:flex;align-items:center;gap:16px}
+.plib-settings-text{flex:1 1 auto;min-width:0}
+.plib-settings-label{font-size:13px;line-height:20px;color:var(--dsw-alias-label-primary)}
+.plib-settings-hint{margin:2px 0 0;font-size:12px;line-height:18px;color:var(--dsw-alias-label-secondary)}
+.plib-settings-error{margin:0;font-size:12px;line-height:18px;color:var(--dsw-alias-state-error-primary)}
 @media (max-width:860px){
   .plib-dock{left:8px;right:8px}
   .plib-chip-label{display:none}
@@ -1123,6 +1187,19 @@ window.__ModuleLoader__.load({
           order: 40,
           locale: NS,
         }, DockPanel))
+
+        // The plugin page's settings card: one switch for the Host's `agentTools` Config. Without the settings
+        // forms (or the host's Switch) the default holds and nothing is shown.
+        ctx.inject(['configForms'], (scope) => {
+          const form = scope.configForms.get('dsh-prompt-library')
+          if (!form || !primitives || typeof primitives.Switch !== 'function') return
+          scope.effect(() => scope.slots.inject('plugins.bundle.config', () => scope.slots.register({
+            name: 'plugins.bundle.config', key: 'dsh-prompt-library', locale: NS,
+            inject() {
+              return { hooks: { settingsForm: form }, setAgentTools: value => form.set('agentTools', value) }
+            },
+          }, AgentToolsSettings)), 'prompt-library: agent tools settings')
+        })
 
       },
     }
